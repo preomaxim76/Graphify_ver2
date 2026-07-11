@@ -15,12 +15,12 @@ def clear() -> None:
     return 
 
 valid_tokens = {
-    "number": ["operator", "number", ")", "pro_operator", "var", "(", ""], 
+    "number": ["operator", "number", ")", "pro_operator", "var", "(", "]", ""], 
     "operator": ["number", "(", "var", "pro_operator"],
     "(": ["number", "(", "pro_operator", "var"],
     ")": ["number", "(", "operator", ")", ""],
-    "pro_operator": ["number", "("],
-    "var": ["operator", "pro_operator", "(", ")", ""]
+    "pro_operator": ["number", "["],
+    "var": ["operator", "pro_operator", "(", ")", "]", ""]
 }
 
 operators = {
@@ -136,28 +136,64 @@ def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, list[str]]:
         last_token = new_token
 
     if "" in valid_tokens[new_token]:
-        return True, "200"
+        return True, "200", var
     else:
         return False, "Cannot end with that character"
 
+def solve(tokens: list[str]) -> float:
+    answer: float = 0
+    if len(tokens) != 1:
+        while len(tokens > 1):
+            # 1. Powers and Roots
+            if "^" in tokens or "sqrt" in tokens:
+                pass
+
+            # 2. Functions
+            if "log" in tokens or "sin" in tokens or "cos" in tokens or "tg" in tokens or "ctg" in tokens:
+                pass
+
+            # 3. Multiplication and division
+            if "*" in tokens or "/" in tokens:
+                pass
+
+            # 4. + or -
+            else:
+                pass
+        return answer
+
+    else:
+        return tokens[0]
+
+def evaluate(tokens: list[str]) -> float:
+    while "(" in tokens:
+        str_tokens = "".join(tokens)
+        position0, position1 = str_tokens.rfind("("), str_tokens.find(")")
+        tokens = tokens[:position1].append(solve(tokens[position0+1:position1])) + tokens[position1+1:]
+
+
 # Create graph points
-def create_points():
-    pass
-
-# Simplify equation and give it to solve_expression()
-def evaluate():
-    pass
-
-# Solve simplified equation
-def solve_expression():
-    pass
+def create_points(tokens: list[str], var: str) -> tuple[list[float], list[float]]:
+    tokens = [float(i) if i.isdigit() else i for i in tokens]
+    if not var:
+        return [], [evaluate(tokens) * 100]
+    
+    return [evaluate((" ".join(tokens)).replace(var, i).split()) for i in range(-100, 101)]
+    
 
 # Open a window with graph
-def create_graph():
-    pass
+def create_graph(tokens: list, var: str) -> None:
+    x_points, y_points = create_points(tokens, var)
+
+    # No variables
+    if not x_points:
+        # TODO: Build the graph
+        return
+    
+    # TODO: Build the graph
+    return
 
 
-def main():
+def main() -> None:
     clear()
     while True:
         # Get equation, checked on a surface level
@@ -172,8 +208,10 @@ def main():
         if not func_return[0]:
             print(f"Error: {func_return[1]}")
             continue 
-        else:
-            print("checked!")
+        
+        create_graph(tokenized_half, func_return[2])
+
+    return
 
         
 

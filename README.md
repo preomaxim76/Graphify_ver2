@@ -8,9 +8,9 @@ x - -- minus: x -2
 x ^ -- power of: x^2, x^(-1)
 
 2. Pro Operators (pro_operators)
-x log -- logarithm, log10(x) - log of x to the power of 10, log(x) - log of x to the power of 2
-x sqrt -- root, sqrt(x) - square root of x, sqrt10(x) - 10 root of x
-x sin/cos/tg/ctg -- sin/cos/tg/ctg, sin(30) = 1/2, sin2(30) = (1/2)^2 = 1/4
+x log -- logarithm, log10[x] - log of x to the power of 10, log[x] - log of x to the power of 2
+x sqrt -- root, sqrt[x] - square root of x, sqrt10[x] - 10 root of x
+x sin/cos/tg/ctg -- sin/cos/tg/ctg, sin[30] = 1/2, sin2[30] = (1/2)^2 = 1/4
 
 3. Brackets
 () - opening and closing bracket
