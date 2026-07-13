@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from os import system, name
 import math
 import sys
+import sympy as sp
 
 # Clear terminal
 def clear() -> None:
@@ -140,36 +141,155 @@ def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, list[str]]:
     else:
         return False, "Cannot end with that character"
 
-def solve(tokens: list[str]) -> float:
-    answer: float = 0
+def ctg(value):
+    return 1 / sp.tan(value)
+
+def solve(tokens: list[str]) -> tuple[float, str]:
     if len(tokens) != 1:
-        while len(tokens > 1):
+        while len(tokens) > 1:
             # 1. Powers and Roots
-            if "^" in tokens or "sqrt" in tokens:
-                pass
+            while "^" in tokens or "sqrt" in tokens:
+                for i in range(len(tokens)):
+                    if tokens[i] == "^":
+                        temp = tokens[i-1] ** tokens[i+1]
+                        del tokens[i-1:i+2]
+                        tokens.insert(i-1, temp)
+                        break
+
+                    elif tokens[i] == "sqrt":
+                        # Square root
+                        if tokens[i+1] == "[":
+                            if tokens[i+2] < 0:
+                                return 0, "Cannot find a square root of a negative number"
+                            
+                            temp = math.sqrt(i+2)
+                            del tokens[i:i+4]
+                        # Other root
+                        else:
+                            if tokens[i+3] < 0 and tokens[i+1] % 2 == 0:
+                                return 0, "Cannot find an even root of a negative number"
+                            temp = math.pow(tokens[i+3], 1/tokens[i+1])
+                            del tokens[i:i+5]
+
+                        tokens.insert(i, temp)
+                        break
 
             # 2. Functions
             if "log" in tokens or "sin" in tokens or "cos" in tokens or "tg" in tokens or "ctg" in tokens:
-                pass
+                for i in range(len(tokens)):
+                    match tokens[i]:
+                        case "log":
+                            # log2
+                            if tokens[i+1] == "[":
+                                if tokens[i+2] <= 0:
+                                    return 0, "Value cannot be 0 or a negative number"
+
+                                temp = math.log2(tokens[i+2])
+                                del tokens[i:i+4]
+
+                            else:
+                                
+                                if tokens[i+1] <= 1:
+                                    return 0, "Base cannot be 1, 0 or a negative number"
+                                if tokens[i+3] <= 0:
+                                    return 0, "Value cannot be 0 or a negative number"
+                                
+                                temp = sp.log(tokens[i+3], tokens[i+1])
+                                del tokens[i:i+5]
+
+                            tokens.insert(i, temp)
+                            break
+
+                        case "sin":
+                            if tokens[i+1] == "[":
+                                radians_value = sp.rad(tokens[i+2])
+                                temp = sp.sin(radians_value)
+                                del tokens[i:i+4]
+                            else:
+                                radians_value = round(math.radians(tokens[i+3]), 1)
+                                temp = sp.sin(radians_value) ** tokens[i+1]
+                                del tokens[i:i+5]
+                            
+                            tokens.insert(i, temp)
+                            break
+
+                        case "cos":
+                            if tokens[i+1] == "[":
+                                radians_value = sp.rad(tokens[i+2])
+                                temp = sp.cos(radians_value)
+                                del tokens[i:i+4]
+                            else:
+                                radians_value = sp.rad(tokens[i+3])
+                                temp = sp.cos(radians_value) ** tokens[i+1]
+                                del tokens[i:i+5]
+                            
+                            tokens.insert(i, temp)
+                            break
+
+                        case "tg":
+                            if tokens[i+1] == "[":
+                                radians_value = sp.rad(tokens[i+2])
+                                temp = sp.tan(radians_value)
+                                del tokens[i:i+4]
+                            else:
+                                radians_value = sp.rad(tokens[i+3])
+                                temp = sp.tan(radians_value) ** tokens[i+1]
+                                del tokens[i:i+5]
+                            
+                            tokens.insert(i, temp)
+                            break
+
+                        case "ctg":
+                            if tokens[i+1] == "[":
+                                radians_value = sp.rad(tokens[i+2])
+                                temp = ctg(radians_value)
+                                del tokens[i:i+4]
+                            else:
+                                radians_value = sp.rad(tokens[i+3])
+                                temp = ctg(radians_value) ** tokens[i+1]
+                                del tokens[i:i+5]
+
+                            tokens.insert(i, temp)
+                            break
 
             # 3. Multiplication and division
             if "*" in tokens or "/" in tokens:
-                pass
+                for i in range(len(tokens)):
+                    if tokens[i] == "*":
+                        temp = tokens[i-1] * tokens[i+1]
+                        del tokens[i-1:i+2]
+                        tokens.insert(i-1, temp)
+                        break
+
+                    elif tokens[i] == "/":
+                        if tokens[i+1] == 0:
+                            return 0, "Cannot divide by 0"
+                        tokens[i-1] / tokens[i+1]
+                        del tokens[i-1:i+2]
+                        tokens.insert(i-1, temp)
+                        break
 
             # 4. + or -
             else:
-                pass
-        return answer
+                for i in range(len(tokens)):
+                    if tokens[i] == "+":
+                        temp = tokens[i-1] + tokens[i+1]
+                        del tokens[i-1:i+2]
+                        tokens.insert(i-1, temp)
+                        break
 
-    else:
-        return tokens[0]
+                    elif tokens[i] == "-":
+                        tokens[i-1:i+2] = tokens[i-1] - tokens[i+1]
+                        break
+        
+    return tokens[0]
+
 
 def evaluate(tokens: list[str]) -> float:
     while "(" in tokens:
         str_tokens = "".join(tokens)
         position0, position1 = str_tokens.rfind("("), str_tokens.find(")")
-        tokens = tokens[:position1].append(solve(tokens[position0+1:position1])) + tokens[position1+1:]
-
+        tokens[position0:position1+1] = solve(tokens[position0+1:position1])
 
 # Create graph points
 def create_points(tokens: list[str], var: str) -> tuple[list[float], list[float]]:
