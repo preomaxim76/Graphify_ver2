@@ -162,7 +162,7 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                             if tokens[i+2] < 0:
                                 return 0, "Cannot find a square root of a negative number"
                             
-                            temp = math.sqrt(i+2)
+                            temp = math.sqrt(tokens[i+2])
                             del tokens[i:i+4]
                         # Other root
                         else:
@@ -203,11 +203,11 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                         case "sin":
                             if tokens[i+1] == "[":
                                 radians_value = sp.rad(tokens[i+2])
-                                temp = sp.sin(radians_value)
+                                temp = sp.sin(radians_value).n()
                                 del tokens[i:i+4]
                             else:
                                 radians_value = round(math.radians(tokens[i+3]), 1)
-                                temp = sp.sin(radians_value) ** tokens[i+1]
+                                temp = sp.sin(radians_value).n() ** tokens[i+1]
                                 del tokens[i:i+5]
                             
                             tokens.insert(i, temp)
@@ -216,11 +216,11 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                         case "cos":
                             if tokens[i+1] == "[":
                                 radians_value = sp.rad(tokens[i+2])
-                                temp = sp.cos(radians_value)
+                                temp = sp.cos(radians_value).n()
                                 del tokens[i:i+4]
                             else:
                                 radians_value = sp.rad(tokens[i+3])
-                                temp = sp.cos(radians_value) ** tokens[i+1]
+                                temp = sp.cos(radians_value).n() ** tokens[i+1]
                                 del tokens[i:i+5]
                             
                             tokens.insert(i, temp)
@@ -229,11 +229,11 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                         case "tg":
                             if tokens[i+1] == "[":
                                 radians_value = sp.rad(tokens[i+2])
-                                temp = sp.tan(radians_value)
+                                temp = sp.tan(radians_value).n()
                                 del tokens[i:i+4]
                             else:
                                 radians_value = sp.rad(tokens[i+3])
-                                temp = sp.tan(radians_value) ** tokens[i+1]
+                                temp = sp.tan(radians_value).n() ** tokens[i+1]
                                 del tokens[i:i+5]
                             
                             tokens.insert(i, temp)
@@ -242,11 +242,11 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                         case "ctg":
                             if tokens[i+1] == "[":
                                 radians_value = sp.rad(tokens[i+2])
-                                temp = ctg(radians_value)
+                                temp = ctg(radians_value).n()
                                 del tokens[i:i+4]
                             else:
                                 radians_value = sp.rad(tokens[i+3])
-                                temp = ctg(radians_value) ** tokens[i+1]
+                                temp = ctg(radians_value).n() ** tokens[i+1]
                                 del tokens[i:i+5]
 
                             tokens.insert(i, temp)
@@ -281,15 +281,20 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                     elif tokens[i] == "-":
                         tokens[i-1:i+2] = tokens[i-1] - tokens[i+1]
                         break
-        
+    print("Solve:", tokens)
     return tokens[0]
 
 
 def evaluate(tokens: list[str]) -> float:
-    while "(" in tokens:
-        str_tokens = "".join(tokens)
-        position0, position1 = str_tokens.rfind("("), str_tokens.find(")")
-        tokens[position0:position1+1] = solve(tokens[position0+1:position1])
+    while len(tokens) > 1:
+        while "(" in tokens:
+            start, end = len(tokens) - list(reversed(tokens)).index("(") - 1, tokens.index(")")
+            tokens = tokens[0:start] + [solve(tokens[start+1:end])] + tokens[end+1:]
+            print("Evaluate function: ", tokens)
+            break
+        tokens = [solve(tokens)]
+        break
+    return tokens[0]
 
 # Create graph points
 def create_points(tokens: list[str], var: str) -> tuple[list[float], list[float]]:
