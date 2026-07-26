@@ -235,6 +235,8 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                             if tokens[i+1] == "[":
                                 radians_value = sp.rad(tokens[i+2])
                                 temp = sp.tan(radians_value).n()
+                                if temp == sp.zoo:
+                                    return 0, "0 in tng"
                                 del tokens[i:i+4]
                             else:
                                 radians_value = sp.rad(tokens[i+3])
@@ -248,6 +250,8 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                             if tokens[i+1] == "[":
                                 radians_value = sp.rad(tokens[i+2])
                                 temp = ctg(radians_value).n()
+                                if temp == sp.zoo:
+                                    return 0, "0 in ctg"
                                 del tokens[i:i+4]
                             else:
                                 radians_value = sp.rad(tokens[i+3])
@@ -302,7 +306,6 @@ def evaluate(tokens: list[str]) -> float:
             break
         func_return = solve(tokens)
         if type(func_return) == tuple:
-            print(func_return)
             return
         tokens = [solve(tokens)]
         break
@@ -310,14 +313,23 @@ def evaluate(tokens: list[str]) -> float:
 
 # Create graph points
 def create_points(tokens: list[str], var: str) -> tuple[list[int], list[float]]:
-    if not var:
-        value = evaluate(tokens)
-        return [], [value * 100]
+    if "sin" in tokens or "cos" in tokens or "tng" in tokens or "ctg" in tokens:
+        if not var:
+            value = evaluate(tokens)
+            return [], [value * 100]
 
-    x = []
-    for i in range(-100, 101):
-        for j in range(0, 100, 10):
-            x.append(i + round(float(f".{j}"), 1))
+        x = [i * 22.5 for i in range(-64, 65)]
+        
+    else:
+        if not var:
+            value = evaluate(tokens)
+            return [], [value * 100]
+
+        x = []
+        for i in range(-100, 100):
+            for j in range(0, 10):
+                x.append(round(i + float(f".{j}"), 1))
+        x.append(100)
 
 
     return x, [evaluate((" ".join(tokens)).replace(var, str(i)).split()) for i in x]
@@ -326,6 +338,15 @@ def create_points(tokens: list[str], var: str) -> tuple[list[int], list[float]]:
 # Open a window with graph
 def create_graph(tokens: list, var: str, equation: str) -> None:
     x_points, y_points = create_points(tokens, var)
+    y_points2 = []
+    x_points2 = []
+    for i in range(len(y_points)):
+        if y_points[i] != None:
+            x_points2.append(x_points[i])
+            y_points2.append(y_points[i])
+
+    y_min, y_max = min(y_points2), max(y_points2)
+    y_normalized = [2 * (val - y_min) / (y_max - y_min) - 1 if val else val for val in y_points]
 
     fig, ax = plt.subplots()
 
@@ -342,11 +363,13 @@ def create_graph(tokens: list, var: str, equation: str) -> None:
 
     ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
     ax.plot(0, 1, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
-    
+
+    plt.margins(x=0, y=.1)
+
     if not x_points:
         plt.plot(y_points)
     else:
-        plt.plot(x_points, y_points)
+        plt.plot(x_points, y_normalized)
 
     plt.title(f"{equation}")
     plt.show()
