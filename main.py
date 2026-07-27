@@ -16,14 +16,17 @@ def clear() -> None:
     return 
 
 valid_tokens = {
-    "number": ["operator", "number", ")", "pro_operator", "var", "(", "]", ""], 
+    "number": ["operator", "number", ")", "pro_operator", "var", "(", "]", "]", "[", ""], 
     "operator": ["number", "(", "var", "pro_operator"],
-    "(": ["number", "(", "pro_operator", "var"],
+    "(": ["number", "(", "pro_operator", "var", "minus"],
     ")": ["number", "(", "operator", ")", ""],
     "pro_operator": ["number", "["],
     "var": ["operator", "pro_operator", "(", ")", "]", ""],
     "[": ["number", "pro_operator", "(", "var"],
-    "]": ["operator", "(", ")", ""]
+    "]": ["operator", "(", ")", ""],
+    "minus": ["(", "pro_operator", "number", "var"]
+    
+    
 }
 
 operators = {
@@ -87,13 +90,14 @@ def tokenize(half: str) -> list[str]:
     return stack
 
 # Check if the second part is valid
-def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, list[str]]:
+def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, str]:
     possible = operators["operator"] + operators["pro_operator"] + [")", "(", "[", "]"] 
 
     last_token = ""
     new_token = ""
     var = ""
-    for token in tokens:
+    for i in range(len(tokens)):
+        token = tokens[i]
         if not (token.isdigit() or token.isalpha() or token in possible):
             return False, f"{token} is not registered"
         if token == "y":
@@ -118,7 +122,7 @@ def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, list[str]]:
             elif token in operators["operator"]:
                 new_token = "operator"
             elif token in operators["pro_operator"]:
-                new_token = "pro_operator"
+                new_token = "pro_operator"  
             else:
                 return False, "Unregistered Character"
 
@@ -161,7 +165,11 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                         else:
                             if tokens[i+3] < 0 and tokens[i+1] % 2 == 0:
                                 return 0, "Cannot find an even root of a negative number"
-                            temp = math.pow(tokens[i+3], 1/tokens[i+1])
+                            try:
+                                temp = math.pow(tokens[i+3], 1/tokens[i+1])
+                            except ValueError:
+                                temp = -(abs(tokens[i+3] ** (1/3)))
+
                             del tokens[i:i+5]
 
                         tokens.insert(i, temp)
@@ -241,6 +249,8 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                             else:
                                 radians_value = sp.rad(tokens[i+3])
                                 temp = sp.tan(radians_value).n() ** tokens[i+1]
+                                if temp == sp.zoo:
+                                    return 0, "0 in tng"
                                 del tokens[i:i+5]
                             
                             tokens.insert(i, temp)
@@ -256,6 +266,8 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                             else:
                                 radians_value = sp.rad(tokens[i+3])
                                 temp = ctg(radians_value).n() ** tokens[i+1]
+                                if temp == sp.zoo:
+                                    return 0, "0 in ctg"
                                 del tokens[i:i+5]
 
                             tokens.insert(i, temp)
@@ -291,23 +303,25 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                         break
 
                     elif tokens[i] == "-":
-                        tokens[i-1:i+2] = tokens[i-1] - tokens[i+1]
+                        temp = tokens[i-1] - tokens[i+1]
+                        del tokens[i-1:i+2]
+                        tokens.insert(i-1, temp)
                         break
     return tokens[0]
 
 
 def evaluate(tokens: list[str]) -> float:
-    tokens = [float(i) if i.isdigit() or (i[0] == "-" and i[1:].isdigit()) or "." in i else i for i in tokens]
+    tokens = [float(i) if i.isdigit() or "." in i else i for i in tokens]
+
     while len(tokens) > 1:
         while "(" in tokens:
             start, end = len(tokens) - list(reversed(tokens)).index("(") - 1, tokens.index(")")
             tokens = tokens[0:start] + [solve(tokens[start+1:end])] + tokens[end+1:]
-            print("Evaluate function: ", tokens)
             break
         func_return = solve(tokens)
         if type(func_return) == tuple:
             return
-        tokens = [solve(tokens)]
+        tokens = [func_return]
         break
     return tokens[0]
 
@@ -331,22 +345,12 @@ def create_points(tokens: list[str], var: str) -> tuple[list[int], list[float]]:
                 x.append(round(i + float(f".{j}"), 1))
         x.append(100)
 
-
     return x, [evaluate((" ".join(tokens)).replace(var, str(i)).split()) for i in x]
     
 
 # Open a window with graph
 def create_graph(tokens: list, var: str, equation: str) -> None:
     x_points, y_points = create_points(tokens, var)
-    y_points2 = []
-    x_points2 = []
-    for i in range(len(y_points)):
-        if y_points[i] != None:
-            x_points2.append(x_points[i])
-            y_points2.append(y_points[i])
-
-    y_min, y_max = min(y_points2), max(y_points2)
-    y_normalized = [2 * (val - y_min) / (y_max - y_min) - 1 if val else val for val in y_points]
 
     fig, ax = plt.subplots()
 
@@ -366,16 +370,34 @@ def create_graph(tokens: list, var: str, equation: str) -> None:
 
     plt.margins(x=0, y=.1)
 
+    plt.autoscale(enable=True, axis='both', tight=True)
+
     if not x_points:
         plt.plot(y_points)
     else:
-        plt.plot(x_points, y_normalized)
+        plt.plot(x_points, y_points)
 
     plt.title(f"{equation}")
     plt.show()
 
     return
 
+def last_touch(tokens: list) -> list[str]:
+    not_finished = True
+    while not_finished:
+        for i in range(len(tokens)):
+            token = tokens[i]
+            if i == len(tokens) - 1:
+                not_finished = False
+                break
+            next_token = tokens[i+1]
+            
+            
+            if token.isdigit() and (next_token in operators["pro_operator"] or next_token == "(" or next_token.isalpha()):
+                tokens.insert(i+1, "*")
+                not_finished = False
+                break
+    return tokens
 
 def main() -> None:
     clear()
@@ -388,11 +410,12 @@ def main() -> None:
         tokenized_half = tokenize(second_half)
 
         func_return = tokens_are_valid(tokenized_half)
-
+        tokenized_half = last_touch(tokenized_half)
+        
         if not func_return[0]:
             print(f"Error: {func_return[1]}")
             continue 
-        
+
         create_graph(tokenized_half, func_return[2], equation)
 
     return

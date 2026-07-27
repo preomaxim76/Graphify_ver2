@@ -1,8 +1,9 @@
-from main import create_points, tokenize, solve
+from main import create_points, tokenize, solve, tokens_are_valid, last_touch
 import sympy as sp
 
-tokens = tokenize("tng[x]")
+tokens = tokenize("log[x]")
 
-func = create_points(tokens, "x")
-print(func)
+print(tokens)
+print(tokens_are_valid(tokens))
 
+print(last_touch(tokens))

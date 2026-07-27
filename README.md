@@ -26,6 +26,6 @@ Rules:
 Every function should start with 'f(x)' or 'y';
 Every function should have only one '=' sign;
 Function cannot be blank;
-Fast multiplication (5x) can only be used with variables(x, z, etc), brackets() or pro_operators (sin, cos, sqrt, etc);
+Fast multiplication (5x) can only be used with variables(x, z, etc), brackets() or pro_operators (sin, cos, sqrt, etc), however it cannot take place if at least one of them is not a number (f.e. () () is not allowed, () * () is correct);
 Variable must be of length 1 and not y;
 
