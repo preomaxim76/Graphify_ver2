@@ -1,9 +1,8 @@
-from main import create_points, tokenize, solve, tokens_are_valid, last_touch
+from main import create_points, tokenize, solve, tokens_are_valid, last_touch, evaluate
 import sympy as sp
 
-tokens = tokenize("log[x]")
+tokens = tokenize("sin[30]")
 
-print(tokens)
-print(tokens_are_valid(tokens))
+print(tokenize(tokens))
 
-print(last_touch(tokens))
+print(create_points(tokens, ""))

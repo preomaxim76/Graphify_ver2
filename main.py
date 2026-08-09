@@ -25,8 +25,6 @@ valid_tokens = {
     "[": ["number", "pro_operator", "(", "var"],
     "]": ["operator", "(", ")", ""],
     "minus": ["(", "pro_operator", "number", "var"]
-    
-    
 }
 
 operators = {
@@ -64,7 +62,9 @@ def equation_is_valid(eq: str) -> tuple[bool, str]:
     if second_half.isspace() or second_half == "":
         return False, "Error: no equation has been found..."
     if second_half.count('(') != second_half.count(')'):
-        return False, "Brackets don't match"
+        return False, "Error: Brackets () do not match"
+    if second_half.count("[") != second_half.count("]"):
+        return False, "Error: Brackets [] do not match"
 
     return True, "No error has been detected"
 
@@ -330,20 +330,21 @@ def create_points(tokens: list[str], var: str) -> tuple[list[int], list[float]]:
     if "sin" in tokens or "cos" in tokens or "tng" in tokens or "ctg" in tokens:
         if not var:
             value = evaluate(tokens)
-            return [], [value * 100]
+            return [], [value for _ in range(100)]
 
         x = [i * 22.5 for i in range(-64, 65)]
         
     else:
         if not var:
             value = evaluate(tokens)
-            return [], [value * 100]
+            return [], [value for _ in range(100)]
 
         x = []
-        for i in range(-100, 100):
+        for i in range(-1000, 1000):
             for j in range(0, 10):
                 x.append(round(i + float(f".{j}"), 1))
-        x.append(100)
+        x.append(1000)
+        
 
     return x, [evaluate((" ".join(tokens)).replace(var, str(i)).split()) for i in x]
     
@@ -367,8 +368,6 @@ def create_graph(tokens: list, var: str, equation: str) -> None:
 
     ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
     ax.plot(0, 1, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
-
-    plt.margins(x=0, y=.1)
 
     plt.autoscale(enable=True, axis='both', tight=True)
 
