@@ -32,6 +32,18 @@ operators = {
     "pro_operator": ["log", "sqrt", "sin", "cos", "tng", "ctg"]
 }
 
+def is_number(text) -> bool:
+    if len(text) >= 2 and text[0] == "-":
+        text = text[1:]
+    if text.isdigit():
+        return True
+    try:
+        float(text)
+        return True
+    except:
+        return False
+    return False
+
 # Input
 def get_equation() -> str:
     statement = "Please enter your equation (quit to stop): "
@@ -75,10 +87,13 @@ def tokenize(half: str) -> list[str]:
         if token.isspace() or not token:
             continue
         if stack:
-            if token.isdigit() and stack[-1].isdigit():
+            if token.isdigit() and (is_number(stack[-1]) or (stack[-1][-1] == "." and is_number(stack[-1][:-1]))):
                 stack[-1] = stack[-1] + token
 
             elif token.isalpha() and stack[-1].isalpha():
+                stack[-1] = stack[-1] + token
+
+            elif token == ".":
                 stack[-1] = stack[-1] + token
 
             else:
@@ -98,7 +113,7 @@ def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, str]:
     var = ""
     for i in range(len(tokens)):
         token = tokens[i]
-        if not (token.isdigit() or token.isalpha() or token in possible):
+        if not (is_number(token) or token.isalpha() or token in possible):
             return False, f"{token} is not registered"
         if token == "y":
             return False, "'y' can not be used as a variable"
@@ -106,7 +121,7 @@ def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, str]:
         if not last_token and token in ("+", "*", "/"):
             return False, "Can't start with an operator"
 
-        if token.isdigit():
+        if is_number(token):
             new_token = "number"
         elif token.isalpha():
             if len(token) > 4:
@@ -128,6 +143,8 @@ def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, str]:
 
         elif token in "()" or token in "[]":
             new_token = token
+        elif token == '-' and not last_token in ["number", "var", ")", "]"]:
+            new_token = "minus"
         elif token in operators["operator"]:
             new_token = "operator"
         else:
@@ -303,9 +320,17 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                         break
 
                     elif tokens[i] == "-":
-                        temp = tokens[i-1] - tokens[i+1]
-                        del tokens[i-1:i+2]
-                        tokens.insert(i-1, temp)
+                        is_unary = i == 0 or tokens[i - 1] in ("+", "-", "*", "/", "^", "(", "[")
+                        if is_unary:
+                            temp = tokens[i+1] * -1
+                            del tokens[i:i+2]
+                            tokens.insert(i, temp)
+                        else:
+                            temp = tokens[i-1] - tokens[i+1]
+                            del tokens[i-1:i+2]
+                            tokens.insert(i-1, temp)
+                        
+                        
                         break
     return tokens[0]
 
@@ -382,19 +407,18 @@ def create_graph(tokens: list, var: str, equation: str) -> None:
     return
 
 def last_touch(tokens: list) -> list[str]:
-    not_finished = True
-    while not_finished:
+    changed = True
+    while changed:
+        changed = False
         for i in range(len(tokens)):
             token = tokens[i]
             if i == len(tokens) - 1:
-                not_finished = False
                 break
             next_token = tokens[i+1]
             
-            
-            if token.isdigit() and (next_token in operators["pro_operator"] or next_token == "(" or next_token.isalpha()):
+            if (is_number(token) or (token.isalpha() and len(token) == 1)) and (next_token in operators["pro_operator"] or next_token == "(" or next_token.isalpha()):
                 tokens.insert(i+1, "*")
-                not_finished = False
+                changed = True
                 break
     return tokens
 
@@ -424,4 +448,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
