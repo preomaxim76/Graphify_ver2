@@ -4,6 +4,7 @@ import math
 import sys
 import sympy as sp
 
+# zoo
 # Clear terminal
 def clear() -> None:
     # If windows
@@ -152,6 +153,10 @@ def tokens_are_valid(tokens: list[str]) -> tuple[bool, str, str]:
 
         if last_token and new_token not in valid_tokens[last_token]:
             return False, "Incorrect Sequence"
+        else:
+            if last_token == "pro_operator" and new_token == "number" and (i == len(tokens) - 1 or tokens[i+1] != "["):
+                return False, "Incorrect Sequence"
+                
         
         last_token = new_token
 
@@ -329,8 +334,7 @@ def solve(tokens: list[str]) -> tuple[float, str]:
                             temp = tokens[i-1] - tokens[i+1]
                             del tokens[i-1:i+2]
                             tokens.insert(i-1, temp)
-                        
-                        
+                    
                         break
     return tokens[0]
 
@@ -370,14 +374,25 @@ def create_points(tokens: list[str], var: str) -> tuple[list[int], list[float]]:
                 x.append(round(i + float(f".{j}"), 1))
         x.append(1000)
         
+    y = [evaluate((" ".join(tokens)).replace(var, str(i)).split()) for i in x]
 
-    return x, [evaluate((" ".join(tokens)).replace(var, str(i)).split()) for i in x]
+    for i in range(len(y)):
+            try:
+                if not y[i].is_real or y[i] == sp.zoo:
+                    y[i] = None
+            # If it's float, int or None it doesn't have is_real attribute
+            except AttributeError:
+                pass
+
+    return x, y
     
 
 # Open a window with graph
 def create_graph(tokens: list, var: str, equation: str) -> None:
     x_points, y_points = create_points(tokens, var)
 
+    
+            
     fig, ax = plt.subplots()
 
     ax.spines['left'].set_position('zero')
